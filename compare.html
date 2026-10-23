@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Porovnávanie jedál | EUBA</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/"><span class="brand-symbol">E</span><span><b>EUBA</b><small>OSOBNÝ VÝBER OBEDOV</small></span></a>
+    <a class="header-link muted-link" href="/profile">Upraviť profil</a>
+  </header>
+
+  <main class="flow-main compare-main">
+    <nav class="progress">
+      <span class="progress-done">01 <b>Profil</b></span><i></i>
+      <span class="progress-active">02 <b>Porovnanie</b></span><i></i>
+      <span>03 <b>Výsledok</b></span>
+    </nav>
+
+    <section class="compare-heading">
+      <div>
+        <div class="section-kicker">KROK 2 Z 3</div>
+        <h1>Ktoré jedlo ti<br><span>sedí viac?</span></h1>
+        <p>Ohodnoť dvojicu podľa každej priority. Z odpovedí vypočítame tvoje osobné poradie.</p>
+      </div>
+      <div class="round-counter"><strong id="round-current">1</strong><span>/ <b id="round-total">8</b><small>porovnaní</small></span></div>
+    </section>
+
+    <div class="weight-chips" id="weight-chips"></div>
+    <section id="compare-area" class="compare-area">
+      <div class="compare-loading">Načítavam ponuku iOrders…</div>
+    </section>
+    <div class="compare-footer">
+      <a class="text-link" href="/profile">← Späť na profil</a>
+      <button id="finish-button" class="button button-secondary" type="button">Zobraziť priebežné poradie</button>
+    </div>
+  </main>
+
+  <footer class="site-footer"><span>EUBA · OSOBNÝ VÝBER OBEDOV</span><span>Jedlá a alergény podľa aktuálneho menu iOrders</span></footer>
+
+  <script>
+    const profile = JSON.parse(localStorage.getItem("eubaProfile") || "null");
+    const area = document.querySelector("#compare-area");
+    const finishButton = document.querySelector("#finish-button");
+    let pairs = [];
+    let index = 0;
+    let selected = {};
+
+    if (!profile) window.location.href = "/profile";
+
+    const labels = {taste: "Chuť", goal: "Tvoj cieľ", cuisine: "Kuchyňa"};
+    const weights = profile?.weights || {taste: 50, goal: 30, cuisine: 20};
+
+    document.querySelector("#weight-chips").innerHTML =
+      Object.entries(labels).map(([key, label]) =>
+        `<span class="weight-chip"><b>${weights[key]}%</b> ${label}</span>`
+      ).join("");
+
+    function shuffle(items) {
+      const result = [...items];
+      for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+      }
+      return result;
+    }
+
+    function renderMeal(meal) {
+      const card = document.createElement("article");
+      card.className = "compare-card";
+
+      const top = document.createElement("div");
+      top.className = "compare-card-meta";
+      top.textContent = `${meal.day || ""} · ${meal.category || "Jedáleň"}`;
+
+      const title = document.createElement("h2");
+      title.textContent = meal.name || meal.description;
+
+      const soup = document.createElement("p");
+      soup.className = "compare-soup";
+      soup.textContent = meal.soup ? `Polievka: ${meal.soup}` : "";
+
+      const facts = document.createElement("div");
+      facts.className = "meal-facts";
+
+      const weight = document.createElement("span");
+      weight.textContent = meal.weight || "Gramáž neuvedená";
+
+      const allergens = document.createElement("span");
+      allergens.textContent = meal.allergens?.length
+        ? `Alergény: ${meal.allergens.join(", ")}`
+        : "Alergény neuvedené";
+
+      facts.append(weight, allergens);
+      card.append(top, title, soup, facts);
+      return card;
+    }
+
+    function renderRound() {
+      if (index >= pairs.length) {
+        area.innerHTML =
+          '<div class="round-complete"><div class="round-complete-icon">✓</div><h2>Porovnania hotové</h2><p>Tvoje odpovede sme započítali do osobného poradia.</p><button class="button button-primary" id="show-results">Zobraziť moje poradie →</button></div>';
+
+        document.querySelector("#show-results").addEventListener(
+          "click",
+          () => window.location.href = "/results"
+        );
+        finishButton.disabled = false;
+        return;
+      }
+
+      selected = {};
+      const [left, right] = pairs[index];
+      document.querySelector("#round-current").textContent = String(index + 1);
+      area.replaceChildren();
+
+      const mealRow = document.createElement("div");
+      mealRow.className = "meal-pair";
+      mealRow.append(renderMeal(left));
+
+      const versus = document.createElement("div");
+      versus.className = "versus";
+      versus.textContent = "VS";
+      mealRow.append(versus, renderMeal(right));
+      area.append(mealRow);
+
+      const ratings = document.createElement("section");
+      ratings.className = "rating-panel";
+
+      const title = document.createElement("div");
+      title.className = "rating-panel-heading";
+      title.innerHTML =
+        "<b>Porovnaj jedlá podľa svojich váh</b><span>Vyber ľavé, pravé alebo rovnako</span>";
+      ratings.append(title);
+
+      Object.entries(labels).forEach(([key, label]) => {
+        const row = document.createElement("div");
+        row.className = "rating-row";
+
+        const dimension = document.createElement("span");
+        dimension.className = "rating-dimension";
+        dimension.innerHTML = `<b>${label}</b><small>váha ${weights[key]}%</small>`;
+        row.append(dimension);
+
+        [["left", "← Ľavé"], ["tie", "Rovnako"], ["right", "Pravé →"]]
+          .forEach(([value, text]) => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "rating-choice";
+            button.textContent = text;
+
+            button.addEventListener("click", () => {
+              selected[key] = value;
+              row.querySelectorAll(".rating-choice")
+                .forEach(item => item.classList.remove("selected"));
+              button.classList.add("selected");
+              nextButton.disabled = Object.keys(selected).length !== 3;
+            });
+
+            row.append(button);
+          });
+
+        ratings.append(row);
+      });
+
+      const nextButton = document.createElement("button");
+      nextButton.type = "button";
+      nextButton.className = "button button-primary next-comparison";
+      nextButton.textContent =
+        index === pairs.length - 1
+          ? "Dokončiť porovnania →"
+          : "Ďalšia dvojica →";
+      nextButton.disabled = true;
+
+      nextButton.addEventListener("click", () => {
+        saveRatings(left, right, selected);
+        index += 1;
+        renderRound();
+      });
+
+      ratings.append(nextButton);
+      area.append(ratings);
+    }
+
+    function saveRatings(left, right, answers) {
+      const ratings = JSON.parse(localStorage.getItem("eubaRatings") || "{}");
+      const kFactor = 32;
+
+      Object.keys(labels).forEach(key => {
+        ratings[left.id] ||= {taste: 1000, goal: 1000, cuisine: 1000};
+        ratings[right.id] ||= {taste: 1000, goal: 1000, cuisine: 1000};
+
+        const leftRating = ratings[left.id][key] ?? 1000;
+        const rightRating = ratings[right.id][key] ?? 1000;
+        const expectedLeft =
+          1 / (1 + Math.pow(10, (rightRating - leftRating) / 400));
+        const scoreLeft =
+          answers[key] === "left" ? 1 :
+          answers[key] === "right" ? 0 : 0.5;
+
+        ratings[left.id][key] =
+          leftRating + kFactor * (scoreLeft - expectedLeft);
+        ratings[right.id][key] =
+          rightRating + kFactor * ((1 - scoreLeft) - (1 - expectedLeft));
+      });
+
+      const comparisons =
+        JSON.parse(localStorage.getItem("eubaComparisons") || "{}");
+      comparisons[left.id] = left;
+      comparisons[right.id] = right;
+
+      localStorage.setItem("eubaRatings", JSON.stringify(ratings));
+      localStorage.setItem("eubaComparisons", JSON.stringify(comparisons));
+    }
+
+    finishButton.addEventListener(
+      "click",
+      () => window.location.href = "/results"
+    );
+
+    fetch("/api/menu")
+      .then(async response => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || "Menu sa nepodarilo načítať.");
+        }
+
+        const allergies = new Set(
+          (profile.allergens || "")
+            .split(/[,;\s]+/)
+            .map(x => x.trim().toUpperCase())
+            .filter(Boolean)
+        );
+
+        const safeMeals = data.filter(
+          meal => !(meal.allergens || [])
+            .some(code => allergies.has(code.toUpperCase()))
+        );
+
+        if (safeMeals.length < 2) {
+          throw new Error(
+            "Po vyradení alergénov nezostali aspoň dve jedlá na porovnanie."
+          );
+        }
+
+        const shuffled = shuffle(safeMeals);
+        const selectedMeals = shuffled.slice(0, Math.min(16, shuffled.length));
+
+        for (let i = 0; i + 1 < selectedMeals.length; i += 2) {
+          pairs.push([selectedMeals[i], selectedMeals[i + 1]]);
+        }
+
+        document.querySelector("#round-total").textContent =
+          String(pairs.length);
+        renderRound();
+      })
+      .catch(error => {
+        area.innerHTML = "";
+        const message = document.createElement("p");
+        message.className = "error-box";
+        message.textContent = error.message;
+        area.append(message);
+      });
+  </script>
+</body>
+</html>
