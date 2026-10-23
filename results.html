@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Tvoje týždenné menu | EUBA</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-symbol">E</span>
+      <span><b>EUBA</b><small>OSOBNÝ VÝBER OBEDOV</small></span>
+    </a>
+    <nav class="header-actions">
+      <a class="header-link muted-link" href="/profile">Upraviť profil</a>
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="header-link logout-button" type="submit">Odhlásiť sa</button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="flow-main results-main">
+    <nav class="progress">
+      <span class="progress-done">01 <b>Tvoj profil</b></span>
+      <i></i>
+      <span class="progress-active">02 <b>Týždenné menu</b></span>
+    </nav>
+
+    <section class="page-heading results-heading">
+      <div class="section-kicker">AKTUÁLNA PONUKA IORDERS</div>
+      <h1>Tvoj obedový<br><span>plán.</span></h1>
+      <p>Agent vyberie a zvýrazní jedlá z dostupnej ponuky podľa tvojho profilu.</p>
+    </section>
+
+    <div class="plan-toolbar">
+      <div id="plan-status" class="plan-status" role="status">
+        Načítavam týždenné menu…
+      </div>
+      <button id="refresh-plan" class="button button-secondary" type="button">
+        Vytvoriť nový plán
+      </button>
+    </div>
+
+    <div id="plan-error" class="error-box" hidden></div>
+    <section id="weekly-menu" class="weekly-menu"></section>
+
+    <div class="inline-note">
+      <span>i</span>
+      <p>
+        <b>Informácia k údajom:</b> odporúčania vychádzajú z textu menu a tvojich
+        odpovedí. iOrders neuvádza kalórie ani množstvo bielkovín. Pri alergii si
+        zloženie jedla vždy potvrď priamo v jedálni.
+      </p>
+    </div>
+
+    <div class="results-actions">
+      <a class="button button-secondary" href="/profile">Upraviť moje preferencie</a>
+      <a class="text-link" href="/">← Úvod</a>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <span>EUBA · OSOBNÝ VÝBER OBEDOV</span>
+    <span>Odporúčanie nie je zdravotné ani výživové poradenstvo</span>
+  </footer>
+
+  <script>
+    const menuRoot = document.querySelector("#weekly-menu");
+    const statusBox = document.querySelector("#plan-status");
+    const errorBox = document.querySelector("#plan-error");
+    const refreshButton = document.querySelector("#refresh-plan");
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    function createElement(tag, className, text) {
+      const element = document.createElement(tag);
+      if (className) element.className = className;
+      if (text !== undefined) element.textContent = text;
+      return element;
+    }
+
+    function renderMenu(meals, plan) {
+      menuRoot.replaceChildren();
+
+      const recommendations = new Map(
+        (plan?.recommendations || []).map(item => [item.meal_id, item])
+      );
+
+      const grouped = new Map();
+      for (const meal of meals) {
+        if (!grouped.has(meal.date)) grouped.set(meal.date, []);
+        grouped.get(meal.date).push(meal);
+      }
+
+      if (!grouped.size) {
+        menuRoot.append(createElement(
+          "div",
+          "empty-ranking",
+          "V aktuálnom menu sa nenašli žiadne jedlá."
+        ));
+        return;
+      }
+
+      for (const [date, dayMeals] of grouped) {
+        const daySection = createElement("section", "menu-day");
+        const firstMeal = dayMeals[0];
+        const heading = createElement("div", "menu-day-heading");
+        heading.append(
+          createElement("span", "section-kicker", firstMeal.day || ""),
+          createElement("h2", "", date)
+        );
+        daySection.append(heading);
+
+        const grid = createElement("div", "menu-meals-grid");
+
+        for (const meal of dayMeals) {
+          const recommendation = recommendations.get(meal.id);
+          const card = createElement(
+            "article",
+            recommendation ? "menu-meal recommended-meal" : "menu-meal"
+          );
+
+          const top = createElement("div", "menu-meal-top");
+          top.append(
+            createElement("span", "menu-category", meal.category || "Obed")
+          );
+
+          if (recommendation) {
+            top.append(createElement(
+              "span",
+              "recommendation-badge",
+              `ODPORÚČANÉ · ${recommendation.score}/100`
+            ));
+          }
+          card.append(top);
+
+          card.append(createElement("h3", "", meal.name || meal.description || "Jedlo"));
+          if (meal.soup) {
+            card.append(createElement("p", "menu-soup", `Polievka: ${meal.soup}`));
+          }
+
+          if (meal.weight) {
+            card.append(createElement("p", "menu-fact", `Gramáž: ${meal.weight}`));
+          }
+
+          card.append(createElement(
+            "p",
+            "menu-fact",
+            `Alergény: ${(meal.allergens || []).join(", ") || "neuvedené"}`
+          ));
+
+          if (recommendation?.reason) {
+            card.append(createElement(
+              "p",
+              "recommendation-reason",
+              recommendation.reason
+            ));
+          }
+
+          grid.append(card);
+        }
+
+        daySection.append(grid);
+        menuRoot.append(daySection);
+      }
+    }
+
+    async function getJson(url, options = {}) {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Požiadavku sa nepodarilo dokončiť.");
+      }
+      return data;
+    }
+
+    async function createPlan() {
+      refreshButton.disabled = true;
+      refreshButton.textContent = "Agent vyberá jedlá…";
+      statusBox.textContent = "Načítavam menu a pripravujem odporúčania…";
+      errorBox.hidden = true;
+
+      try {
+        const [menuData, planData] = await Promise.all([
+          getJson("/api/menu"),
+          getJson("/api/plan", {
+            method: "POST",
+            headers: {"X-CSRF-Token": csrfToken}
+          })
+        ]);
+
+        renderMenu(menuData.meals || [], planData);
+        statusBox.textContent = planData.recommendations?.length
+          ? "Odporúčania pre tvoje aktuálne menu."
+          : "Agent zatiaľ nenašiel vhodné jedlá v aktuálnej ponuke.";
+      } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.hidden = false;
+        statusBox.textContent = "Plán sa nepodarilo vytvoriť.";
+      } finally {
+        refreshButton.disabled = false;
+        refreshButton.textContent = "Vytvoriť nový plán";
+      }
+    }
+
+    async function loadLatestPlan() {
+      try {
+        const [menuData, latestData] = await Promise.all([
+          getJson("/api/menu"),
+          getJson("/api/plan/latest")
+        ]);
+
+        if (latestData.plan) {
+          renderMenu(menuData.meals || [], latestData.plan);
+          statusBox.textContent = "Zobrazuje sa tvoj posledný uložený plán.";
+        } else {
+          await createPlan();
+        }
+      } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.hidden = false;
+        statusBox.textContent = "Menu sa nepodarilo načítať.";
+      }
+    }
+
+    refreshButton.addEventListener("click", createPlan);
+    loadLatestPlan();
+  </script>
+</body>
+</html>
