@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Vytvoriť účet | EUBA</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-symbol">E</span>
+      <span><b>EUBA</b><small>OSOBNÝ VÝBER OBEDOV</small></span>
+    </a>
+    <a class="header-link muted-link" href="/login">Už mám účet</a>
+  </header>
+
+  <main class="auth-main">
+    <section class="auth-card">
+      <div class="section-kicker">VYTVORENIE ÚČTU</div>
+      <h1>Začni svojím<br><span>profilom.</span></h1>
+      <p class="auth-intro">Vytvor si účet, aby sa tvoje odpovede a odporúčania uložili.</p>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" action="/register" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <label class="field-label">
+          Používateľské meno
+          <input name="username" type="text" minlength="3" maxlength="40"
+                 autocomplete="username" required>
+        </label>
+
+        <label class="field-label">
+          Heslo
+          <input name="password" type="password" minlength="10"
+                 autocomplete="new-password" required>
+          <span>Heslo musí mať aspoň 10 znakov.</span>
+        </label>
+
+        <label class="field-label">
+          Zopakuj heslo
+          <input name="password_confirm" type="password" minlength="10"
+                 autocomplete="new-password" required>
+        </label>
+
+        <button class="button button-primary auth-submit" type="submit">
+          Vytvoriť účet <span>→</span>
+        </button>
+      </form>
+
+      <p class="auth-switch">Už máš účet? <a href="/login">Prihlás sa</a>.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>EUBA · OSOBNÝ VÝBER OBEDOV</span>
+    <span>Heslo sa ukladá v zabezpečenej podobe</span>
+  </footer>
+</body>
+</html>
