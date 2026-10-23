@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Prihlásenie | EUBA</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-symbol">E</span>
+      <span><b>EUBA</b><small>OSOBNÝ VÝBER OBEDOV</small></span>
+    </a>
+    <a class="header-link muted-link" href="/register">Vytvoriť účet</a>
+  </header>
+
+  <main class="auth-main">
+    <section class="auth-card">
+      <div class="section-kicker">PRIHLÁSENIE</div>
+      <h1>Vitaj<br><span>späť.</span></h1>
+      <p class="auth-intro">Prihlás sa a pokračuj do svojho osobného profilu.</p>
+
+      {% if error %}
+        <div class="error-box">{{ error }}</div>
+      {% endif %}
+
+      <form method="post" action="/login" class="auth-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <label class="field-label">
+          Používateľské meno
+          <input name="username" type="text" autocomplete="username" required>
+        </label>
+
+        <label class="field-label">
+          Heslo
+          <input name="password" type="password"
+                 autocomplete="current-password" required>
+        </label>
+
+        <button class="button button-primary auth-submit" type="submit">
+          Prihlásiť sa <span>→</span>
+        </button>
+      </form>
+
+      <p class="auth-switch">Ešte nemáš účet? <a href="/register">Vytvor si ho</a>.</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>EUBA · OSOBNÝ VÝBER OBEDOV</span>
+    <span>Tvoj profil je dostupný po prihlásení</span>
+  </footer>
+</body>
+</html>
