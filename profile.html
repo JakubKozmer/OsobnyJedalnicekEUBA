@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="sk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Moje preferencie | EUBA</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/">
+      <span class="brand-symbol">E</span>
+      <span><b>EUBA</b><small>OSOBNÝ VÝBER OBEDOV</small></span>
+    </a>
+    <nav class="header-actions">
+      <span class="signed-in">Prihlásený: {{ current_user["username"] }}</span>
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="header-link logout-button" type="submit">Odhlásiť sa</button>
+      </form>
+    </nav>
+  </header>
+
+  <main class="flow-main">
+    <nav class="progress">
+      <span class="progress-active">01 <b>Tvoj profil</b></span>
+      <i></i>
+      <span>02 <b>Týždenné menu</b></span>
+    </nav>
+
+    <section class="page-heading">
+      <div class="section-kicker">10 OTÁZOK</div>
+      <h1>Čo ti chutí<br><span>a čo je dôležité?</span></h1>
+      <p>Odpovede uložíme do tvojho účtu. Agent ich použije pri výbere z aktuálneho menu.</p>
+    </section>
+
+    <form id="profile-form" class="profile-form">
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">01</span>
+          <div><h2>Aký je tvoj cieľ?</h2><p>Agent to zohľadní pri odporúčaní.</p></div>
+        </div>
+        <div class="choice-grid">
+          <label class="choice-card"><input type="radio" name="goal" value="udržať si hmotnosť" required><span class="choice-check"></span><b>Udržať hmotnosť</b><small>Bežný každodenný výber</small></label>
+          <label class="choice-card"><input type="radio" name="goal" value="schudnúť"><span class="choice-check"></span><b>Schudnúť</b><small>Ľahšie jedlá</small></label>
+          <label class="choice-card"><input type="radio" name="goal" value="nabrať svaly"><span class="choice-check"></span><b>Nabrať svaly</b><small>Dôraz na bielkoviny, ak sú známe</small></label>
+          <label class="choice-card"><input type="radio" name="goal" value="jesť pestrejšie"><span class="choice-check"></span><b>Jesť pestrejšie</b><small>Skúšať rôzne jedlá</small></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">02</span>
+          <div><h2>Aké kuchyne máš rád/rada?</h2><p>Môžeš vybrať viac odpovedí.</p></div>
+        </div>
+        <div class="check-grid">
+          <label class="check-option"><input type="checkbox" name="cuisines" value="slovenská a tradičná"><span>Slovenská a tradičná</span></label>
+          <label class="check-option"><input type="checkbox" name="cuisines" value="talianska"><span>Talianska</span></label>
+          <label class="check-option"><input type="checkbox" name="cuisines" value="ázijská"><span>Ázijská</span></label>
+          <label class="check-option"><input type="checkbox" name="cuisines" value="stredomorská"><span>Stredomorská</span></label>
+          <label class="check-option"><input type="checkbox" name="cuisines" value="vegetariánska"><span>Vegetariánska</span></label>
+          <label class="check-option"><input type="checkbox" name="cuisines" value="bez preferencie"><span>Nemám preferenciu</span></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">03</span>
+          <div><h2>Ktoré hlavné suroviny uprednostňuješ?</h2><p>Vyber všetky, ktoré ti chutia.</p></div>
+        </div>
+        <div class="check-grid">
+          <label class="check-option"><input type="checkbox" name="proteins" value="kuracie mäso"><span>Kuracie mäso</span></label>
+          <label class="check-option"><input type="checkbox" name="proteins" value="bravčové mäso"><span>Bravčové mäso</span></label>
+          <label class="check-option"><input type="checkbox" name="proteins" value="hovädzie mäso"><span>Hovädzie mäso</span></label>
+          <label class="check-option"><input type="checkbox" name="proteins" value="ryby"><span>Ryby</span></label>
+          <label class="check-option"><input type="checkbox" name="proteins" value="vegetariánske jedlá"><span>Vegetariánske jedlá</span></label>
+          <label class="check-option"><input type="checkbox" name="proteins" value="vajcia a syry"><span>Vajcia a syry</span></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">04</span>
+          <div><h2>Ako pripravené jedlá ti chutia?</h2><p>Vyber viac možností.</p></div>
+        </div>
+        <div class="check-grid">
+          <label class="check-option"><input type="checkbox" name="cooking_methods" value="pečené"><span>Pečené</span></label>
+          <label class="check-option"><input type="checkbox" name="cooking_methods" value="grilované"><span>Grilované</span></label>
+          <label class="check-option"><input type="checkbox" name="cooking_methods" value="na prírodno"><span>Na prírodno</span></label>
+          <label class="check-option"><input type="checkbox" name="cooking_methods" value="so šťavou alebo omáčkou"><span>So šťavou alebo omáčkou</span></label>
+          <label class="check-option"><input type="checkbox" name="cooking_methods" value="vyprážané"><span>Vyprážané</span></label>
+          <label class="check-option"><input type="checkbox" name="cooking_methods" value="ľahké a svieže"><span>Ľahké a svieže</span></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">05</span>
+          <div><h2>Aké prílohy preferuješ?</h2><p>Vyber viac možností.</p></div>
+        </div>
+        <div class="check-grid">
+          <label class="check-option"><input type="checkbox" name="sides" value="zemiaky"><span>Zemiaky</span></label>
+          <label class="check-option"><input type="checkbox" name="sides" value="ryža"><span>Ryža</span></label>
+          <label class="check-option"><input type="checkbox" name="sides" value="cestoviny"><span>Cestoviny</span></label>
+          <label class="check-option"><input type="checkbox" name="sides" value="knedľa"><span>Knedľa</span></label>
+          <label class="check-option"><input type="checkbox" name="sides" value="zelenina alebo šalát"><span>Zelenina alebo šalát</span></label>
+          <label class="check-option"><input type="checkbox" name="sides" value="strukoviny"><span>Strukoviny</span></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">06</span>
+          <div><h2>Čo polievka?</h2><p>Polievky sa v menu často uvádzajú pri obede.</p></div>
+        </div>
+        <div class="choice-grid choice-grid-three">
+          <label class="choice-card"><input type="radio" name="soup_preference" value="mám rád/rada" required><span class="choice-check"></span><b>Mám ju rád/rada</b></label>
+          <label class="choice-card"><input type="radio" name="soup_preference" value="občas"><span class="choice-check"></span><b>Občas</b></label>
+          <label class="choice-card"><input type="radio" name="soup_preference" value="nezáleží mi na nej"><span class="choice-check"></span><b>Nezáleží mi na nej</b></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">07</span>
+          <div><h2>Ako často chceš bezmäsitý obed?</h2><p>Vyber približný počet dní za týždeň.</p></div>
+        </div>
+        <div class="choice-grid choice-grid-three">
+          <label class="choice-card"><input type="radio" name="vegetarian_days" value="0" required><span class="choice-check"></span><b>0 dní</b><small>Radšej mäsité jedlá</small></label>
+          <label class="choice-card"><input type="radio" name="vegetarian_days" value="1-2"><span class="choice-check"></span><b>1–2 dni</b></label>
+          <label class="choice-card"><input type="radio" name="vegetarian_days" value="3 a viac"><span class="choice-check"></span><b>3 a viac dní</b></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">08</span>
+          <div><h2>Ako pikantné jedlá ti vyhovujú?</h2><p>Vyber jednu odpoveď.</p></div>
+        </div>
+        <div class="choice-grid choice-grid-three">
+          <label class="choice-card"><input type="radio" name="spice_level" value="nepikantné" required><span class="choice-check"></span><b>Nepikantné</b></label>
+          <label class="choice-card"><input type="radio" name="spice_level" value="mierne pikantné"><span class="choice-check"></span><b>Mierne pikantné</b></label>
+          <label class="choice-card"><input type="radio" name="spice_level" value="pikantné"><span class="choice-check"></span><b>Pikantné</b></label>
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">09</span>
+          <div><h2>Čo máš rád/rada a čomu sa vyhýbaš?</h2><p>Napíš suroviny alebo jedlá, ktoré v možnostiach chýbali.</p></div>
+        </div>
+        <label class="field-label">
+          Obľúbené jedlá a suroviny
+          <input name="likes" type="text" maxlength="500"
+                 placeholder="Napríklad kuracie mäso, ryža, paradajky">
+        </label>
+        <label class="field-label">
+          Jedlá a suroviny, ktoré nemáš rád/rada
+          <input name="dislikes" type="text" maxlength="500"
+                 placeholder="Napríklad huby, vnútornosti">
+        </label>
+      </section>
+
+      <section class="form-section">
+        <div class="form-section-title">
+          <span class="section-icon">10</span>
+          <div><h2>Ktoré alergénové kódy máme vyradiť?</h2><p>Vyber kódy uvedené pri jedlách v iOrders.</p></div>
+        </div>
+        <div class="check-grid allergen-grid">
+          {% for code in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "BL", "BM", "D", "E"] %}
+            <label class="check-option allergen-option">
+              <input type="checkbox" name="allergens" value="{{ code }}">
+              <span>{{ code }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <p class="field-hint">
+          Pri alergii si zloženie vždy over priamo u jedálne. Neznáme alebo nejednoznačné
+          kódy treba overiť; aplikácia nenahrádza informácie od jedálne.
+        </p>
+      </section>
+
+      <div id="profile-error" class="error-box" hidden></div>
+
+      <div class="form-actions">
+        <a class="text-link" href="/">← Úvod</a>
+        <button class="button button-primary" id="save-profile" type="submit">
+          Uložiť profil a vytvoriť plán <span>→</span>
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <span>EUBA · OSOBNÝ VÝBER OBEDOV</span>
+    <span>Odporúčania vychádzajú z údajov aktuálneho menu</span>
+  </footer>
+
+  <script>
+    const savedProfile = {{ (profile or {})|tojson }};
+    const form = document.querySelector("#profile-form");
+    const errorBox = document.querySelector("#profile-error");
+    const submitButton = document.querySelector("#save-profile");
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    for (const name of [
+      "goal",
+      "soup_preference",
+      "vegetarian_days",
+      "spice_level"
+    ]) {
+      const savedValue = savedProfile[name];
+      if (savedValue !== undefined) {
+        const input = form.querySelector(
+          `input[name="${name}"][value="${CSS.escape(String(savedValue))}"]`
+        );
+        if (input) input.checked = true;
+      }
+    }
+
+    for (const name of [
+      "cuisines",
+      "proteins",
+      "cooking_methods",
+      "sides",
+      "allergens"
+    ]) {
+      const selectedValues = savedProfile[name] || [];
+      form.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+        input.checked = selectedValues.includes(input.value);
+      });
+    }
+
+    form.elements.likes.value = savedProfile.likes || "";
+    form.elements.dislikes.value = savedProfile.dislikes || "";
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+      errorBox.hidden = true;
+      submitButton.disabled = true;
+      submitButton.textContent = "Ukladám profil…";
+
+      const values = name =>
+        [...form.querySelectorAll(`input[name="${name}"]:checked`)]
+          .map(input => input.value);
+
+      const profile = {
+        goal: form.querySelector('input[name="goal"]:checked')?.value || "",
+        cuisines: values("cuisines"),
+        proteins: values("proteins"),
+        cooking_methods: values("cooking_methods"),
+        sides: values("sides"),
+        soup_preference:
+          form.querySelector('input[name="soup_preference"]:checked')?.value || "",
+        vegetarian_days:
+          form.querySelector('input[name="vegetarian_days"]:checked')?.value || "",
+        spice_level:
+          form.querySelector('input[name="spice_level"]:checked')?.value || "",
+        likes: form.elements.likes.value.trim(),
+        dislikes: form.elements.dislikes.value.trim(),
+        allergens: values("allergens")
+      };
+
+      try {
+        const response = await fetch("/api/profile", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken
+          },
+          body: JSON.stringify(profile)
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Profil sa nepodarilo uložiť.");
+        }
+
+        window.location.href = "/results";
+      } catch (error) {
+        errorBox.textContent = error.message;
+        errorBox.hidden = false;
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Uložiť profil a vytvoriť plán <span>→</span>';
+      }
+    });
+  </script>
+</body>
+</html>
