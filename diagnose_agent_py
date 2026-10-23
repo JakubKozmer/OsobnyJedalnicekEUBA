@@ -1,0 +1,49 @@
+import os
+import traceback
+from pathlib import Path
+
+from dotenv import load_dotenv
+from openai import OpenAI
+
+
+load_dotenv(Path(__file__).with_name(".env"))
+
+api_key = os.getenv("OPENAI_API_KEY")
+agent_id = os.getenv("OPENAI_AGENT_ID")
+
+print("API kľúč načítaný:", bool(api_key))
+print("ID agenta načítané:", bool(agent_id))
+print("ID agenta:", agent_id or "CHÝBA")
+
+if not api_key:
+    raise SystemExit("V .env chýba OPENAI_API_KEY.")
+
+if not agent_id:
+    raise SystemExit("V .env chýba OPENAI_AGENT_ID.")
+
+try:
+    client = OpenAI()
+
+    agent = client.beta.agents.retrieve(agent_id)
+    print("Agent nájdený:", agent.id)
+    print("Názov agenta:", agent.name)
+    print("Model:", agent.model)
+
+    with client.beta.agents.sessions.create(
+        agent_id=agent_id,
+        environment={"type": "none"},
+        input="Vráť JSON: {\"ok\": true}",
+        stream=True,
+    ).with_result_collection() as stream:
+        for event in stream:
+            print("Udalosť:", getattr(event, "type", "neznámy typ"))
+
+        result = stream.get_final_result()
+
+    print("Odpoveď agenta:")
+    print(result.output_text)
+
+except Exception as exc:
+    print("Typ chyby:", type(exc).__name__)
+    print("Chyba:", str(exc))
+    traceback.print_exc()
